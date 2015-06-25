@@ -1,0 +1,690 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\begin_preamble
+
+
+
+\title{Theory Manual}
+\date{\today}
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package none
+\inputencoding iso8859-15
+\fontencoding default
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\float_placement h
+\paperfontsize 12
+\spacing single
+\use_hyperref true
+\pdf_bookmarks false
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref section
+\pdf_pdfusetitle false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 0
+\use_package cancel 0
+\use_package esint 1
+\use_package mathdots 0
+\use_package mathtools 0
+\use_package mhchem 0
+\use_package stackrel 0
+\use_package stmaryrd 0
+\use_package undertilde 0
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip smallskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+\noindent
+Introduction
+\end_layout
+
+\begin_layout Standard
+\noindent
+Modeling a wave energy converter (WEC) involves the interaction between
+ the incident waves, device motion, power takeoff (PTO) mechanism, and mooring
+ (Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "Figure 1"
+
+\end_inset
+
+).
+ WEC-Sim uses a radiation and diffraction method
+\begin_inset CommandInset citation
+LatexCommand cite
+key "li2012synthesis,Babarit2012b"
+
+\end_inset
+
+ to predict power performance and for design optimization.
+ The radiation and diffraction method generally obtains the hydrodynamic
+ forces from a frequency-domain boundary element method solver using linear
+ coefficients to solve the system dynamics in the time domain.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Figures/Physics.png
+	lyxscale 40
+	scale 55
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "Figure 1"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Methodology for WEC-Sim
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+\noindent
+Boundary Element Method
+\end_layout
+
+\begin_layout Standard
+\noindent
+A common approach to determine the hydrodynamic forces is to presume that
+ it is the sum of wave radiation and diffraction components.
+ These forcing components are modeled using linear coefficients and can
+ be obtained from a frequency-domain potential flow boundary element method
+ (BEM) solver (e.g., WAMIT 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Lee2006"
+
+\end_inset
+
+, AWQA-FER, and Nemoh 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Nemoh2014"
+
+\end_inset
+
+).
+ The BEM solutions are obtained by solving the Laplace equation for the
+ velocity potential, which assumes the flow is inviscid, incompressible,
+ and irrotational.
+ More details on the theory for the frequency-domain BEM can be found in
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Lee2006"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+\noindent
+Time-Domain Numerical Method
+\end_layout
+
+\begin_layout Standard
+\noindent
+The dynamic response of the system was calculated by solving the Cummins
+ equation 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Cummins1962"
+
+\end_inset
+
+, often used to represent the equation of motion for marine systems.
+ The equation of motion for a floating-body, about its center of gravity,
+ can be given as: 
+\begin_inset Formula 
+\begin{equation}
+m\ddot{X}=F_{ext}+F_{rad}+F_{PTO}+F_{v}+F_{B}+F_{m},
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $\ddot{X}$
+\end_inset
+
+ is the (translational and rotational) acceleration of the device, 
+\begin_inset Formula $m$
+\end_inset
+
+ is the mass matrix, 
+\begin_inset Formula $F_{ext}$
+\end_inset
+
+ is the wave excitation force vector, 
+\begin_inset Formula $F_{rad}$
+\end_inset
+
+ is the force vector due to wave radiation, 
+\begin_inset Formula $F_{PTO}$
+\end_inset
+
+ is the PTO force vector, 
+\begin_inset Formula $F_{v}$
+\end_inset
+
+ is the viscous damping force vector, 
+\begin_inset Formula $F_{B}$
+\end_inset
+
+ is the net buoyancy restoring force vector, and 
+\begin_inset Formula $F_{m}$
+\end_inset
+
+ is the force vector due to the mooring connection.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+Both 
+\begin_inset Formula $F_{ext}$
+\end_inset
+
+ and 
+\begin_inset Formula $F_{rad}$
+\end_inset
+
+ are calculated from the frequency-domain BEM solver.
+ The radiation term includes an added-mass and wave damping term associated
+ with the acceleration and velocity of the floating body respectively.
+ The wave excitation term includes a Froude–Krylov force component generated
+ by the undisturbed incident waves and a diffraction component due to the
+ presence of the floating body.
+ WEC-Sim can be used for regular and irregular wave simulations, but note
+ that 
+\begin_inset Formula $F_{ext}$
+\end_inset
+
+ and 
+\begin_inset Formula $F_{rad}$
+\end_inset
+
+ are calculated differently for sinusoidal steady-state response scenarios
+ and random sea simulations.
+ The sinusoidal steady-state response is often used for simple WEC designs
+ with regular incoming waves; however, for random sea simulations or any
+ simulations where fluid memory effects of the system are essential the
+ convolutional integral method is recommended to represent the memory retardatio
+n force on the floating body.
+ 
+\end_layout
+
+\begin_layout Subsection
+\noindent
+Sinusoidal Steady-State Response Scenario
+\end_layout
+
+\begin_layout Standard
+\noindent
+This approach assumes the system response is in sinusoidal steady-state
+ form, and is only valid for regular wave simulations.
+ The radiation term can be calculated using the added-mass and the wave
+ radiation damping term for a given wave frequency, which is obtained from
+\begin_inset Formula 
+\begin{equation}
+F_{rad}=-A(\omega_{r})\ddot{X}-B(\omega_{r})\dot{X}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $A(\omega_{r})$
+\end_inset
+
+ and 
+\begin_inset Formula $B(\omega_{r})$
+\end_inset
+
+ are the added mass and wave radiation damping matrices, 
+\begin_inset Formula $\omega_{r}$
+\end_inset
+
+ is the wave frequency, and 
+\begin_inset Formula $\dot{X}$
+\end_inset
+
+ is the velocity of the floating body.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The regular wave profile is based on linear Airy wave theory for a given
+ wave height, wave frequency, and water depth.
+ The regular wave excitation force is obtained from
+\begin_inset Formula 
+\begin{equation}
+F_{ext}=Re(R_{f}\frac{H}{2}F_{X}(ω_{r})e^{i(ω_{r}t)}),\label{eq:RegularWaveExt}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $Re$
+\end_inset
+
+ denotes the real part of the formula, 
+\begin_inset Formula $R_{f}$
+\end_inset
+
+ is the ramp function, 
+\begin_inset Formula $H$
+\end_inset
+
+ is the wave height, and 
+\begin_inset Formula $F_{X}$
+\end_inset
+
+ is the excitation vector term, including the magnitude and phase of the
+ force.
+ 
+\end_layout
+
+\begin_layout Subsection
+\noindent
+Convolution Integral Formulation
+\end_layout
+
+\begin_layout Standard
+\noindent
+To include the fluid memory effect on the system, the convolution integral
+ calculation is used based upon the Cummins equation.
+ The radiation term can be calculated by
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
+F_{rad}=-A_{\infty}\ddot{X}-\intop_{0}^{t}K(t-\tau)\dot{X}(\tau)d\tau
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $A_{\infty}$
+\end_inset
+
+ is the added mass matrix at infinite frequency, 
+\begin_inset Formula $\dot{X}$
+\end_inset
+
+ is the velocity of the body, and 
+\begin_inset Formula $K$
+\end_inset
+
+ is the impulse response function.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+For regular waves, Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:RegularWaveExt"
+
+\end_inset
+
+ is used to calculate the wave excitation force.
+ For irregular waves, the free surface elevation is constructed from a linear
+ superposition of a number of regular wave components.
+ It is often characterized using a wave spectrum (Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:An-example-of PM Spectrum"
+
+\end_inset
+
+) that describes the wave energy distribution over a range of wave frequencies,
+ characterized by a significant wave height and peak wave period.
+ The irregular excitation force can be calculated as the real part of an
+ integral term across all wave frequencies,
+\begin_inset Formula 
+\begin{equation}
+F_{ext}=Re(R_{f}\intop_{0}^{\infty}\sqrt{2S(ω_{r})}F_{X}(ω_{r})e^{i(ω_{r}t+\phi)}dω_{r}),
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $Re$
+\end_inset
+
+ denotes the real part of the function, 
+\begin_inset Formula $S$
+\end_inset
+
+ is the wave spectrum, and 
+\begin_inset Formula $\phi$
+\end_inset
+
+is a random phase angle.
+ 
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename Figures/Spectrum.png
+	lyxscale 50
+	scale 35
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename Figures/WaveElevation.png
+	lyxscale 50
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+An example of wave spectrum and irregular wave elevation generated by WEC-Sim
+ (Pierson–Moskowitz spectrum)
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:An-example-of PM Spectrum"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Ramp Function
+\end_layout
+
+\begin_layout Standard
+\noindent
+A ramp function (
+\begin_inset Formula $R_{f}$
+\end_inset
+
+), necessary to avoid strong transient flows at the earlier time steps of
+ the simulation, is used to calculate the wave excitation force.
+ The ramp function is given by
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+R_{f}=\begin{cases}
+\frac{1}{2}(1+\cos(\pi+\frac{\pi t}{t_{r}}), & \frac{t}{t_{r}}<1\\
+1, & \frac{t}{t_{r}}\geq1
+\end{cases}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $t$
+\end_inset
+
+ is the simulation time and 
+\begin_inset Formula $t_{r}$
+\end_inset
+
+ is the ramp time.
+\end_layout
+
+\begin_layout Section
+Viscous Drag
+\end_layout
+
+\begin_layout Standard
+\noindent
+Generally, the effect of viscosity on the WEC dynamics needs to be considered
+ while neglecting this effect may lead to an overestimation of the power
+ generation of the system, particularly when a linear model is applied.
+ A common way of modeling the viscous damping is to add a (Morison-equation-type
+) quadratic damping term to the equation of motion,
+\begin_inset Formula 
+\begin{equation}
+F_{V}=\frac{1}{2}C_{d}\rho A_{D}\dot{X}|\dot{X}|,
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $C_{d}$
+\end_inset
+
+ is the viscous drag coefficient and 
+\begin_inset Formula $A_{D}$
+\end_inset
+
+ is the characteristic area.
+ The viscous damping coefficient for the device must be carefully selected
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "li2012synthesis,Babarit2012b"
+
+\end_inset
+
+.
+ The drag coefficient is dependent on device geometry, scale, and relative
+ velocity between the body and the flow around it.
+ The drag coefficient becomes much larger when the Reynolds and the Keulegan–Car
+penter number are smaller.
+ Note that empirical data on the viscous damping coefficient can be found
+ in various literature and standards.
+ However, the available data may be limited to existing simple geometries.
+ For practical point absorber geometry, the hydrodynamic forces may have
+ to be evaluated by conducting wave tank tests or prescribed motion computationa
+l fluid dynamic (CFD) simulations.
+\end_layout
+
+\begin_layout Section
+\noindent
+Power Takeoff Forces
+\end_layout
+
+\begin_layout Standard
+\noindent
+The power takeoff (PTO) mechanism was represented as a linear spring-damper
+ system, where the reaction force is given by: 
+\begin_inset Formula 
+\begin{equation}
+F_{PTO}=-K{}_{PTO}X_{rel}-C_{PTO}\dot{X}_{rel},
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $K_{PTO}$
+\end_inset
+
+ is the stiffness of the PTO, 
+\begin_inset Formula $C_{PTO}$
+\end_inset
+
+ is the damping of the PTO, and 
+\begin_inset Formula $X_{rel}$
+\end_inset
+
+ and 
+\begin_inset Formula $\dot{X}_{rel}$
+\end_inset
+
+ are the relative motion and velocity between the two bodies.
+\end_layout
+
+\begin_layout Section
+\noindent
+Mooring Forces
+\end_layout
+
+\begin_layout Standard
+\noindent
+The mooring load was represented using a linear quasi-static mooring stiffness,
+ which can be calculated by
+\begin_inset Formula 
+\begin{equation}
+F_{m}=-K_{m}X,
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $K_{m}$
+\end_inset
+
+ is the stiffness matrix for the mooring system, and 
+\begin_inset Formula $X$
+\end_inset
+
+ is the response of the body.
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "References_Theory"
+options "IEEEtran"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

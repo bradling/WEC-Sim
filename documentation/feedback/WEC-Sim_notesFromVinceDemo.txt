@@ -1,0 +1,30 @@
+These are notes from a short demo given to Vince on how to use WEC-Sim.
+
+	The functions and pre-processing: does it still make sense to separate them 
+	the way they are? The ‘functions’ folder contains both functions and 
+	scripts. That might be semantics but apparently it can be misleading. Should
+	we leave these folders as they are, or should we combine them, or rename 
+	them something else?
+	
+	I think either the simu or waves class should have the time vector. When 
+	trying to plot the wave amplitude time history this is how I had to do it: 
+	plot(output.bodies(1).time, waves.waveAmpTime). It is a bit awkward to have 
+	to get the time from the body response. Thoughts?
+	
+	We should have an example of how to setup an irregular wave case. Kelley is 
+	going to add some commented-out lines in the RM3 input file, and mention it 
+	briefly in the manual.
+	
+	The naming convention for files (functions, etc.) is not consistent (use of 
+	capital and lower case letters).
+	
+	Jonswap gama is hardcoded to 3.3
+	
+	An obvious next step after running the simulation is plotting results. It  
+	might be nice to include sample post-processing scripts? I have a couple of 
+	generalized post-processing scripts for plotting forces and response if 
+	anyone wants to look at it.
+	
+	It is very difficult to follow the code sometimes. Example: to understand 
+	how waves are setup you need to look at the wave class, several 
+	pre-processing functions, and the Body block in the right order.

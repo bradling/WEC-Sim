@@ -19,8 +19,7 @@ classdef simulationClass<handle
         outputDir           = 'output'                                     % Data output directory name
         time                = 0                                            % Simulation time [s] (default = 0 s)
     end
-    
-    properties (Access = public)
+    properties (Access = public) 
         numWecBodies        = [] % make these dependent variables                                % Number of hydrodynamic bodies that comprise the WEC device (default = 'NOT DEFINED') 
         numPtos             = []                                            % Number of power take-off elements in the model (default = 'NOT DEFINED') 
         numConstraints      = []                                            % Number of contraints in the wec model (default = 'NOT DEFINED')
@@ -31,26 +30,28 @@ classdef simulationClass<handle
         startTime           = 0                                            % Simulation start time (default = 0 s)  
         endTime             = 500                                          % Simulation end time (default = 500 s)
         dt                  = 0.1                                          % Simulation time step (default = 0.1 s)
-        rampT               = 100                                          % Ramp time for wave forcing (default = 100 s)
+        rampT               = 1000                                          % Ramp time for wave forcing (default = 100 s)
         domainSize          = 200                                          % Size of free surface and seabed. This variable is only used for visualization (default = 200 m)
         CITime              = 60                                           % Convolution integral time (default = 60 s)
-        ssCalc              = 0
+        convCalc            = 0
         ssReal              = 'TD'
         ssImport            = [];
         ssMax               = 10
         R2Thresh            = 0.95
+        hydrocoupling       = 0                                            %'No'
+        numFreq             = 201                                          % Number of wave frequencies for interpolation (default = 201) 
         mode                = 'normal'                                     %'normal','accelerator','rapid-accelerator' (default = 'normal') 
         solver              = 'ode4'                                       % PDE solver used by the Simulink/SimMechanics simulation (default = 'ode4')
         explorer            = 'on'                                         % SimMechanics Explorer 'on' or 'off' (default = 'on'
-        numT                = []
-        numDTPerT           = []
-        numRampT            = []        
-        rho                 = []                                           % Density of water (default = 1000 kg/m^3)
-        g                   = []                                           % Acceleration due to gravity (default = 9.81 m/s)
+        rho                 = 1000                                         % Density of water (default = 1000 kg/m^3)
+        g                   = 9.81                                         % Acceleration due to gravity (default = 9.81 m/s)
+        nonlinrestore       = 0;
+        nonlinFK            = 0;
+                    
     end
-    
     properties (Dependent)
         maxIt                                                              % Total number of simulation time steps (default = dependent)        CIkt                                                               % Calculate the number of convolution integral timesteps (default = dependent)
+        zeroVel                                                            % Matrix of zeros with a size of 6,obj.CIkt+1 (default = dependent)
         CTTime                                                             % Convolution integral time series (default = dependent)       
         logFile                                                            % File with run information summary
         caseFile                                                           % .mat file with all simulation information
@@ -60,6 +61,7 @@ classdef simulationClass<handle
     
     methods
      
+        % simulationClass constructor function
         function obj = simulationClass(file)
              if nargin >= 1
                  obj.inputFile = file; % Function to change the name of the input file if desired (not reccomended)
@@ -120,7 +122,16 @@ classdef simulationClass<handle
         % Function to calculate the convolution integral time series
             CTTime = 0:obj.dt:obj.dt*obj.CIkt;
         end  
-                
+        
+        % Function to pre-populate a zero matrix for converlution integral calculation      
+        function zeroVel = get.zeroVel(obj)
+            if obj.hydrocoupling == 0
+                zeroVel = zeros (6,obj.CIkt+1);
+            else
+                zeroVel = zeros (6*obj.numWecBodies,obj.CIkt+1);
+            end
+        end
+        
         function logFile = get.logFile(obj)
             if exist(obj.simMechanicsFile) ~=4
                 error('The simMecahnics file, %s, does not exist in the case directory',value)
@@ -143,28 +154,11 @@ classdef simulationClass<handle
         end
         
         function obj = set.simMechanicsFile(obj,value)
-            if exist(value,'file') ~= 4
+            if exist(value) ~= 4
                 error('The simMecahnics file, %s, does not exist in the case directory',value)
             end
                 obj.simMechanicsFile = value;
         end
         
-        function rhoDensitySetup(obj,rho,g)
-                obj.rho = rho;
-                obj.g   = g;                
-        end
-        
-        function listInfo(obj,waveTypeNum)
-            fprintf('\nWEC-Sim Simulation Settings:\n');
-            fprintf('\tTime Marching Solver                 = Fourth-Order Runge-Kutta Formula \n')
-            fprintf('\tStart Time                     (sec) = %G\n',obj.startTime) 
-            fprintf('\tEnd Time                       (sec) = %G\n',obj.endTime) 
-            fprintf('\tTime Step Size                 (sec) = %G\n',obj.dt)
-            fprintf('\tRamp Function Time             (sec) = %G\n',obj.rampT) 
-            if waveTypeNum > 10
-                fprintf('\tConvolution Integral Interval  (sec) = %G\n',obj.CITime) 
-            end
-            fprintf('\tTotal Number of Time Step            = %u \n',obj.maxIt) 
-        end
     end
 end

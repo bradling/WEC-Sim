@@ -1,0 +1,2 @@
+Note on time-step selection. i.e. need to make sure time-step is small enough 
+that simulation is timestep-independent. 
