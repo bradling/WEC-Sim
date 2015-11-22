@@ -629,6 +629,45 @@ classdef bodyClass<handle
                 fclose(fid);
             end
         end
+        
+        function varargout = plot_rad_irf(obj, idx1, idx2)
+            
+            scrsz = get( groot, 'Screensize' );
+            
+            h = figure;
+            h.Position = [ [0.05 0.05] .* scrsz(3:4) [0.9 0.8] .* scrsz(3:4)];
+            h.Color = 'w';
+            
+            
+            
+            for ii = 1:length(idx1)
+                for jj = 1:length(idx2)
+                    sys = ss(shiftdim(obj.hydroData.hydro_coeffs.radiation_damping.state_space.A.all(idx1(ii),idx2(jj),:,:),2), ...
+                             shiftdim(obj.hydroData.hydro_coeffs.radiation_damping.state_space.B.all(idx1(ii),idx2(jj),:),1)', ...
+                             shiftdim(obj.hydroData.hydro_coeffs.radiation_damping.state_space.C.all(idx1(ii),idx2(jj),:,:),2), ...
+                                      obj.hydroData.hydro_coeffs.radiation_damping.state_space.D.all(idx1(ii),idx2(jj)));
+                    [y,t] = impulse(sys);
+                    subplot(length(idx1),length(idx2),(ii-1)*length(idx2) + jj)
+                    plot(obj.hydroData.hydro_coeffs.radiation_damping.impulse_response_fun.t, ...
+                         squeeze(obj.hydroData.hydro_coeffs.radiation_damping.impulse_response_fun.K(idx1(ii),idx2(jj),:)));
+                    hold on
+                    plot(t,y,':')
+                    hold off
+                    grid on
+                    xlim([0 20])
+                    order = length(obj.hydroData.hydro_coeffs.radiation_damping.state_space.A.all(idx1(ii),idx2(jj),1,:) ~= 0);
+                    title(sprintf('Idx %.0f, %.0f, Order %.0f', idx1(ii), idx2(jj), order));
+                end
+            end
+            
+            if nargout > 0
+                varargout{1} = h;
+            end
+        end
+        
+        function varargout = plot_rad_ss_eigvals(obj)
+            
+        end
 
     end
 end

@@ -1,7 +1,7 @@
 %%% WEC-Sim run file
 
 %% Start WEC-Sim log
-bdclose('all'); clc; diary off; close all; 
+bdclose('all'); diary off; close all; 
 clear body waves simu output pto constraint ptoSim
 delete('*.log');
 diary('simulation.log')
@@ -264,6 +264,7 @@ if simu.paraview == 1
     fid = fopen(filename, 'w');
     for ii = 1:simu.numWecBodies
         bodyname = output.bodies(ii).name;
+        bodyname = strrep(bodyname,filesep,'_');
         mkdir(['vtk' filesep 'body' num2str(ii) '_' bodyname]);
         % hydrostatic pressure
         try
