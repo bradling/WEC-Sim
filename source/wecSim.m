@@ -264,24 +264,33 @@ if simu.paraview == 1
     fid = fopen(filename, 'w');
     for ii = 1:simu.numWecBodies
         bodyname = output.bodies(ii).name;
+        % convert any file seperators to underscores
         bodyname = strrep(bodyname,filesep,'_');
+        % remove any character that is not a letter, number or underscore
+        bodyname = regexprep(bodyname,'\W', '');
         mkdir(['vtk' filesep 'body' num2str(ii) '_' bodyname]);
         % hydrostatic pressure
-        try
-            eval(['hspressure = body' num2str(ii) '_hspressure_out.signals.values;']);
-        catch
+        if simu.paraview_showpressure == 1
+            try
+                eval(['hspressure = body' num2str(ii) '_hspressure_out.signals.values;']);
+            catch
+                hspressure = [];
+            end
+            % wave (freude-krylov) nonlinear pressure
+            try
+                eval(['wpressurenl = body' num2str(ii) '_wavenonlinearpressure_out.signals.values;']);
+            catch
+                wpressurenl = [];
+            end
+            % wave (freude-krylov) linear pressure
+            try
+                eval(['wpressurel = body' num2str(ii) '_wavelinearpressure_out.signals.values;']);
+            catch
+                wpressurel = [];
+            end
+        else
             hspressure = [];
-        end
-        % wave (freude-krylov) nonlinear pressure
-        try
-            eval(['wpressurenl = body' num2str(ii) '_wavenonlinearpressure_out.signals.values;']);
-        catch
             wpressurenl = [];
-        end
-        % wave (freude-krylov) linear pressure
-        try
-            eval(['wpressurel = body' num2str(ii) '_wavelinearpressure_out.signals.values;']);
-        catch
             wpressurel = [];
         end
         body(ii).write_paraview_vtp(output.bodies(ii).time, output.bodies(ii).position, bodyname, simu.simMechanicsFile, datestr(simu.simulationDate), hspressure, wpressurenl, wpressurel);

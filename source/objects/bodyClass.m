@@ -539,6 +539,7 @@ classdef bodyClass<handle
             vertex = obj.bodyGeometry.vertex;
             face = obj.bodyGeometry.face;
             cellareas = obj.bodyGeometry.area;
+            % clean bodyname - remove anything that isnt
             for it = 1:length(t)
                 % calculate new position
                 pos = pos_all(it,:);
