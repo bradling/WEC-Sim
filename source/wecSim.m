@@ -9,42 +9,49 @@ clear body waves simu output pto constraint ptoSim
 
 %% Read input file
 tic
+try fprintf('wecSimMRC Case %g\n',imcr); end
 fprintf('\nWEC-Sim Read Input File ...   \n'); 
 evalc('wecSimInputFile');
-
-% Multiple Condistions Run Input
+% Read Inputs for Multiple Conditions Run 
 if exist('mcr','var') == 1; 
    for n=1:length(mcr.cases(1,:))
      combine = sprintf('%s=%g',char(mcr.header{n}),mcr.cases(imcr,n));
      evalc(combine);
    end; clear n combine;
 end
-
-
-% Count number of bodies, PTOs, and constraints blocks
-simu.numWecBodies = length(body(1,:));
+% Waves and Simu: check inputs
+waves.checkinputs;
+simu.checkinputs;
+% Constraints: count
 if exist('constraint','var') == 1
     simu.numConstraints = length(constraint(1,:));
     for ii = 1:simu.numConstraints
         constraint(ii).constraintNum = ii;
     end; clear ii
 end
+% PTOs: count
 if exist('pto','var') == 1
     simu.numPtos = length(pto(1,:));
     for ii = 1:simu.numPtos
         pto(ii).ptoNum = ii;
     end; clear ii
 end
-
-% check user inputs
-waves.checkinputs;
-simu.checkinputs;
+% Bodies: count, check inputs, read hdf5 file
+numHydroBodies = 0;
+for ii = 1:length(body(1,:))
+    body(ii).bodyNumber = ii;
+    if body(ii).nhBody==0
+        numHydroBodies = numHydroBodies + 1;
+    else
+        body(ii).bemioFlag = 0;
+        body(ii).massCalcMethod = 'user';
+    end
+end
+simu.numWecBodies = numHydroBodies; clear numHydroBodies
 for ii = 1:simu.numWecBodies
     body(ii).checkinputs;
-    % read h5 files
     body(ii).readH5File;
     body(ii).checkBemio;
-    body(ii).bodyNumber = ii;
     body(ii).bodyTotal = simu.numWecBodies;
     if simu.b2b==1
         body(ii).lenJ = zeros(6*body(ii).bodyTotal,1);
@@ -52,7 +59,7 @@ for ii = 1:simu.numWecBodies
         body(ii).lenJ = zeros(6,1);
     end
 end; clear ii
-% PTO-Sim input
+% PTO-Sim: read input, count
 if exist('ptoSimInputFile.m','file') == 2 
     ptoSimInputFile 
     ptosim.countblocks;
@@ -65,57 +72,23 @@ tic
 fprintf('\nWEC-Sim Pre-processing ...   \n'); 
 
 
-%% Set variant subsystems options
-% Non-linear hydro
-if (simu.nlHydro >0) || (simu.paraview == 1)
-    for kk = 1:simu.numWecBodies
-        body(kk).bodyGeo(body(kk).geometryFile)
-    end; clear kk
-end
-nlHydro = simu.nlHydro;
-sv_linearHydro=Simulink.Variant('nlHydro==0');
-sv_nonlinearHydro=Simulink.Variant('nlHydro>0');
-sv_meanFS=Simulink.Variant('nlHydro<2');
-sv_instFS=Simulink.Variant('nlHydro==2');
-% Morrison Element
-morrisonElement = simu.morrisonElement;
-sv_MEOff=Simulink.Variant('morrisonElement==0');
-sv_MEOn=Simulink.Variant('morrisonElement==1');
-% MoorDyn Coupling
-moorDyn = simu.moorDyn;
-sv_mooringMatrix=Simulink.Variant('moorDyn==0');
-sv_moorDyn      =Simulink.Variant('moorDyn==1');
-% States-space
-if waves.typeNum==0 || waves.typeNum==10 %'noWave' & 'regular'
-    radiation_option = 1;
-elseif simu.ssCalc == 1
-    radiation_option = 3;
-else
-    radiation_option = 2;
-end
-sv_constantCoeff=Simulink.Variant('radiation_option==1');
-sv_convolution=Simulink.Variant('radiation_option==2');
-sv_stateSpace=Simulink.Variant('radiation_option==3');
-% Wave type
-typeNum = waves.typeNum;
-sv_noWave=Simulink.Variant('typeNum<10');
-sv_regularWaves=Simulink.Variant('typeNum>=10 && typeNum<20');
-sv_irregularWaves=Simulink.Variant('typeNum>=20 && typeNum<30');
-sv_udfWaves=Simulink.Variant('typeNum>=30');
-% Body2Body
-B2B = simu.b2b;
-sv_noB2B=Simulink.Variant('B2B==0');
-sv_B2B=Simulink.Variant('B2B==1');
-
 %% HydroForce Pre-Processing: Wave Setup & HydroForcePre.
 % simulation setup
 simu.setupSim;
 % wave setup
 waves.waveSetup(body(1).hydroData.simulation_parameters.w, body(1).hydroData.simulation_parameters.water_depth, simu.rampT, simu.dt, simu.maxIt, simu.g, simu.endTime);
+% Non-linear hydro
+if (simu.nlHydro >0) || (simu.paraview == 1)
+    for kk = 1:length(body(1,:))
+        body(kk).bodyGeo(body(kk).geometryFile)
+    end; clear kk
+end
 % hydroForcePre
 for kk = 1:simu.numWecBodies
     body(kk).hydroForcePre(waves.w,waves.waveDir,simu.CIkt,simu.CTTime,waves.numFreq,simu.dt,simu.rho,simu.g,waves.type,waves.waveAmpTime,kk,simu.numWecBodies,simu.ssCalc,simu.nlHydro,simu.b2b);
 end; clear kk
+
+
 %% Check body-wave-simu compatability
 % Check that the hydro data for each body is given for the same frequencies
 for ii = 1:simu.numWecBodies
@@ -147,6 +120,50 @@ if waves.typeNum~=0 && waves.typeNum~=10
     end
 end
 
+
+%% Set variant subsystems options
+nlHydro = simu.nlHydro;
+sv_linearHydro=Simulink.Variant('nlHydro==0');
+sv_nonlinearHydro=Simulink.Variant('nlHydro>0');
+sv_meanFS=Simulink.Variant('nlHydro<2');
+sv_instFS=Simulink.Variant('nlHydro==2');
+% Morrison Element
+morrisonElement = simu.morrisonElement;
+sv_MEOff=Simulink.Variant('morrisonElement==0');
+sv_MEOn=Simulink.Variant('morrisonElement==1');
+% MoorDyn Coupling
+moorDyn = simu.moorDyn;
+sv_mooringMatrix=Simulink.Variant('moorDyn==0');
+sv_moorDyn      =Simulink.Variant('moorDyn==1');
+% Radiation Damping
+if waves.typeNum==0 || waves.typeNum==10 %'noWave' & 'regular'
+    radiation_option = 1;
+elseif simu.ssCalc == 1
+    radiation_option = 3;
+else
+    radiation_option = 2;
+end
+sv_constantCoeff=Simulink.Variant('radiation_option==1');
+sv_convolution=Simulink.Variant('radiation_option==2');
+sv_stateSpace=Simulink.Variant('radiation_option==3');
+% Wave type
+typeNum = waves.typeNum;
+sv_noWave=Simulink.Variant('typeNum<10');
+sv_regularWaves=Simulink.Variant('typeNum>=10 && typeNum<20');
+sv_irregularWaves=Simulink.Variant('typeNum>=20 && typeNum<30');
+sv_udfWaves=Simulink.Variant('typeNum>=30');
+% Body2Body
+B2B = simu.b2b;
+sv_noB2B=Simulink.Variant('B2B==0');
+sv_B2B=Simulink.Variant('B2B==1');
+% nonHydroBody
+for ii=1:length(body(1,:))
+    eval(['nhbody_' num2str(ii) ' = body(ii).nhBody;']);
+    eval(['sv_b' num2str(ii) '_hydroBody = Simulink.Variant(''nhbody_' num2str(ii) '==0'');']);
+    eval(['sv_b' num2str(ii) '_nonHydroBody = Simulink.Variant(''nhbody_' num2str(ii) '==1'');']);
+end; clear ii
+
+
 %% End Pre-Processing and Output All the Simulation and Model Setting
 toc
 simu.listInfo(waves.typeNum);
@@ -176,6 +193,7 @@ else
 end
 fprintf('\n')
 
+
 %% Load simMechanics file & Run Simulation
 tic
 fprintf('\nSimulating the WEC device defined in the SimMechanics model %s...   \n',simu.simMechanicsFile)
@@ -187,20 +205,22 @@ warning('off','Simulink:blocks:TDelayTimeTooSmall');
 warning('off','Simulink:blocks:BusSelDupBusCreatorSigNames');
 warning('off','MATLAB:loadlibrary:FunctionNotFound');
 warning('off','MATLAB:loadlibrary:parsewarnings');
-
+warning('off','Simulink:blocks:DivideByZero');
+% run simulation
 simu.loadSimMechModel(simu.simMechanicsFile);
 sim(simu.simMechanicsFile);
 % Restore modified stuff
 clear nlHydro sv_linearHydro sv_nonlinearHydro ssCalc radiation_option sv_convolution sv_stateSpace sv_constantCoeff typeNum B2B sv_B2B sv_noB2B;
-clear sv_noWave sv_regularWaves sv_irregularWaves sv_udfWaves sv_meanFS sv_instFS moorDyn sv_mooringMatrix sv_moorDyn sv_MEOn sv_MEOff morrisonElement;
+clear nhbod* sv_b* sv_noWave sv_regularWaves sv_irregularWaves sv_udfWaves sv_meanFS sv_instFS moorDyn sv_mooringMatrix sv_moorDyn sv_MEOn sv_MEOff morrisonElement;
 toc
+
 
 %% Post processing and Saving Results
 tic
 fprintf('\nPost-processing and saving...   \n')
-% bodies
-for iBod = 1:simu.numWecBodies
-    eval(['body' num2str(iBod) '_out.name = body(' num2str(iBod) ').hydroData.properties.name;']);
+% Bodies
+for iBod = 1:length(body(1,:))
+    eval(['body' num2str(iBod) '_out.name = body(' num2str(iBod) ').name;']);
     if iBod == 1; bodiesOutput = body1_out; end
     bodiesOutput(iBod) = eval(['body' num2str(iBod) '_out']);
     eval(['clear body' num2str(iBod) '_out'])
@@ -247,6 +267,10 @@ end; clear iBod
 if exist('userDefinedFunctions.m','file') == 2
     userDefinedFunctions;
 end
+% ASCII files
+if simu.outputtxt==1
+    output.writetxt();
+end
 % ParaView Visualization
 if simu.paraview == 1
     fprintf('    ...writing ParaView files...   \n')
@@ -262,7 +286,7 @@ if simu.paraview == 1
     % bodies
     filename = ['vtk' filesep 'bodies.txt'];
     fid = fopen(filename, 'w');
-    for ii = 1:simu.numWecBodies
+    for ii = 1:length(body(1,:))
         bodyname = output.bodies(ii).name;
         % convert any file seperators to underscores
         bodyname = strrep(bodyname,filesep,'_');
@@ -309,7 +333,9 @@ if simu.paraview == 1
     clear bodies fid filename
 end
 clear body*_hspressure_out body*_wavenonlinearpressure_out body*_wavelinearpressure_out  
-% 
+
+
+%% Save files
 clear ans table tout; 
 toc
 % diary off 

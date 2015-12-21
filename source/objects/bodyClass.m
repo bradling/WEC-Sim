@@ -20,8 +20,11 @@ classdef bodyClass<handle
     end
 
     properties (SetAccess = 'public', GetAccess = 'public') %input file
+        name              = []                                                  % Body name. For WEC bodies this is given in the h5 file.
         mass              = []                                                  % Mass in kg or specify 'equilibrium' to have mass= dis vol * density
         momOfInertia      = []                                                  % Moment of inertia [Ixx Iyy Izz] in kg*m^2
+        cg                = []                                                  % Center of gravity [x y z] in meters. For WEC bodies this is given in the h5 file.
+        dispVol           = []                                                  % Displaced volume at equilibrium position in meters cubed. For WEC bodies this is given in the h5 file.
         geometryFile      = 'NONE'                                              % Location of geomtry stl file
         mooring           = struct('c',          zeros(6,6), ...                % Mooring damping, 6 x 6 matrix
                                    'k',          zeros(6,6), ...                % Mooring stiffness, 6 x 6 matrix
@@ -40,6 +43,7 @@ classdef bodyClass<handle
                                    'characteristicArea', [0 0 0], ...           % Characteristic area for Morrison Elements calculations (format [Area_x Area_y Area_z], default = [0 0 0])
                                    'VME',                 0     , ...           % Characteristic volume for Morrison Element (default = 0)
                                    'rgME',               [0 0 0])               % Vector from center of gravity to point of application for Morrison Element (format [X Y Z], default = [0 0 0]).
+        nhBody            = 0                                                   % Flag for non-hydro body
     end
 
     properties (SetAccess = 'public', GetAccess = 'public') %body geometry stl file
@@ -67,6 +71,14 @@ classdef bodyClass<handle
         function obj = bodyClass(filename,iBod)
             obj.h5File = filename;
             obj.hydroDataBodyNum = iBod;
+            if ~isempty(filename)
+                name = ['/body' num2str(obj.hydroDataBodyNum)];
+                obj.cg = h5read(filename,[name '/properties/cg']);
+                obj.cg = obj.cg';
+                obj.dispVol = h5read(filename,[name '/properties/disp_vol']);
+                obj.name = h5read(filename,[name '/properties/name']);
+                try obj.name = obj.name{1}; end
+            end
         end
 
         function readH5File(obj)
@@ -184,6 +196,22 @@ classdef bodyClass<handle
             obj.hydroForce.storage.output_forceTotal = ft_mod;
         end
 
+        function setInitDisp(obj, x_rot, ax_rot, ang_rot, addLinDisp)
+            % function to set the initial displacement when having initial rotation
+            % x_rot: rotation point
+            % ax_rot: axis about which to rotate (must be a normal vector)
+            % ang_rot: rotation angle in radians
+            % addLinDisp: initial linear displacement (in addition to the displacement caused by rotation)
+            cg = obj.cg;
+            relCoord = cg - x_rot;
+            rotatedRelCoord = obj.rotateXYZ(relCoord,ax_rot,ang_rot);
+            newCoord = rotatedRelCoord + x_rot;
+            linDisp = newCoord-cg;
+            obj.initDisp.initLinDisp= linDisp + addLinDisp; 
+            obj.initDisp.initAngularDispAxis = ax_rot;
+            obj.initDisp.initAngularDispAngle = ang_rot;
+        end
+
         function listInfo(obj)
             % List body info
             fprintf('\n\t***** Body Number %G, Name: %s *****\n',obj.hydroData.properties.body_number,obj.hydroData.properties.name)
@@ -272,7 +300,7 @@ classdef bodyClass<handle
         
         function checkinputs(obj)
             % hydro data file
-            if exist(obj.h5File,'file') == 0
+            if exist(obj.h5File,'file')==0 && obj.nhBody==0
                 error('The hdf5 file %s does not exist',obj.h5File)
             end
             % geometry file
@@ -486,8 +514,8 @@ classdef bodyClass<handle
                 if nlHydro == 0
                     obj.mass = obj.hydroData.properties.disp_vol * rho;
                 else
-                    cg = obj.hydroData.properties.cg;
-                    z = obj.bodyGeometry.center(:,3) + cg(3);
+                    cg_tmp = obj.hydroData.properties.cg;
+                    z = obj.bodyGeometry.center(:,3) + cg_tmp(3);
                     z(z>0) = 0;
                     area = obj.bodyGeometry.area;
                     av = [area area area] .* -obj.bodyGeometry.norm;
@@ -612,7 +640,7 @@ classdef bodyClass<handle
                 end; 
                 fprintf(fid, '\n');
                 fprintf(fid,'        </DataArray>\n');
-                  % Hydrostatic Pressure
+                % Hydrostatic Pressure
                 if ~isempty(hspressure)
                     fprintf(fid,'        <DataArray type="Float32" Name="Hydrostatic Pressure" NumberOfComponents="1" format="ascii">\n');
                     for ii = 1:numFace
@@ -621,7 +649,7 @@ classdef bodyClass<handle
                     fprintf(fid, '\n');
                     fprintf(fid,'        </DataArray>\n');
                 end
-                  % Non-Linear Froude-Krylov Wave Pressure
+                % Non-Linear Froude-Krylov Wave Pressure
                 if ~isempty(wavenonlinearpressure)
                     fprintf(fid,'        <DataArray type="Float32" Name="Wave Pressure NonLinear" NumberOfComponents="1" format="ascii">\n');
                     for ii = 1:numFace
@@ -630,7 +658,7 @@ classdef bodyClass<handle
                     fprintf(fid, '\n');
                     fprintf(fid,'        </DataArray>\n');
                 end
-                  % Linear Froude-Krylov Wave Pressure
+                % Linear Froude-Krylov Wave Pressure
                 if ~isempty(wavelinearpressure)
                     fprintf(fid,'        <DataArray type="Float32" Name="Wave Pressure Linear" NumberOfComponents="1" format="ascii">\n');
                     for ii = 1:numFace
