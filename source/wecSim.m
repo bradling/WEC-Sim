@@ -1,10 +1,10 @@
 %%% WEC-Sim run file
 
 %% Start WEC-Sim log
-bdclose('all'); diary off; close all; 
+bdclose('all'); diary off; %close all; 
 clear body waves simu output pto constraint ptoSim
-delete('*.log');
-diary('simulation.log')
+% delete('*.log');
+% diary('simulation.log')
 
 
 %% Read input file
@@ -312,7 +312,7 @@ clear body*_hspressure_out body*_wavenonlinearpressure_out body*_wavelinearpress
 % 
 clear ans table tout; 
 toc
-diary off 
-movefile('simulation.log',simu.logFile)
-save(simu.caseFile)
+% diary off 
+% movefile('simulation.log',simu.logFile)
+% save(simu.caseFile)
 

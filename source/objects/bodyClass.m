@@ -204,7 +204,7 @@ classdef bodyClass<handle
             obj.triCenter();
         end
 
-        function triArea(obj)
+        function triArea(obj, varargin)
             % Function to calculate the area of a triangle
             points = obj.bodyGeometry.vertex;
             faces = obj.bodyGeometry.face;
@@ -222,6 +222,15 @@ classdef bodyClass<handle
             if sum(sum(sign(av_tmp))) ~= sum(sum(sign(av)))
                 warning(['The order of triangle vertices in ' obj.geometryFile ' do not follow the right hand rule. ' ...
                     'This will causes visualization errors in the SimMechanics Explorer'])
+%                 for ii = 1:size(faces,1)
+%                     if sum(av_tmp(ii,:) + av(ii,:)) < 0.00001;
+%                         obj.bodyGeometry.face(ii,:) = obj.bodyGeometry.face(ii,[3 2 1]);
+%                         if nargin > 1
+%                             fprintf('Flipping Normal %.0f, from [%.3f, %.3f, %.3f] to [%.3f, %.3f, %.3f]\n', ...
+%                                 ii, av_tmp(ii,1), av_tmp(ii,2), av_tmp(ii,3), av(ii,1), av(ii,2), av(ii,3));
+%                         end
+%                     end
+%                 end
             end
             norm_mag = sqrt(tnorm(:,1).^2 + tnorm(:,2).^2 + tnorm(:,3).^2);
             check = sum(norm_mag)/length(norm_mag);
@@ -246,10 +255,19 @@ classdef bodyClass<handle
             tri = obj.bodyGeometry.face;
             p = obj.bodyGeometry.vertex;
             n = obj.bodyGeometry.norm;
+            points = obj.bodyGeometry.vertex;
+            faces = obj.bodyGeometry.face;
+            tnorm = obj.bodyGeometry.norm;
+            v1 = points(faces(:,3),:)-points(faces(:,1),:);
+            v2 = points(faces(:,2),:)-points(faces(:,1),:);
+            av_tmp =  1/2.*(cross(v1,v2));
+            for ii = 1:size(av_tmp,1)
+                nCalc(ii,:) = av_tmp(ii,:) ./ norm(av_tmp(ii,:));
+            end
             figure()
             hold on 
-            trimesh(tri,p(:,1),p(:,2),p(:,3))
-            quiver3(c(:,1),c(:,2),c(:,3),n(:,1),n(:,2),n(:,3))
+            trimesh(tri,p(:,1),p(:,2),p(:,3),'facealpha',0.9)
+            quiver3(c(:,1),c(:,2),c(:,3),nCalc(:,1),nCalc(:,2),nCalc(:,3))
         end
         
         function checkinputs(obj)
@@ -666,8 +684,222 @@ classdef bodyClass<handle
             end
         end
         
+        function plot_excitation(obj, varargin)
+            
+            xunit = 'w';
+            if nargin > 1
+                if strcmp(varargin{1}, 'w') || strcmp(varargin{1}, 'T') || strcmp(varargin{1}, 'f')
+                    xunit = varargin{1};
+                else
+                    warning('Not a valid x unit. Plotting values against angular frequency')
+                end
+            end
+            for ii =1:numel(obj)
+                w = obj(ii).hydroData.simulation_parameters.w';
+                re = squeeze(obj(ii).hydroData.hydro_coeffs.excitation.re(:,1,:));
+                im = squeeze(obj(ii).hydroData.hydro_coeffs.excitation.im(:,1,:));
+                fe = 1000.*9.81.* (re + sqrt(-1).* im);
+
+                switch xunit
+                    case 'w'
+                        xvals = w;
+                        xlab = sprintf('Angular Frequency (rad/s)');
+                        xlimval = w([1 end]);
+                    case 'T'
+                        xvals = 2*pi./w;
+                        xlab = sprintf('Period (sec)');
+                        xlimval = [0 20];
+                    case 'f'
+                        xvals = w./(2*pi);
+                        xlab = sprintf('Frequency (Hz)');
+                        xlimval = xvals([1 end]);
+                end
+
+                h = figure;
+                h.Color = 'w';
+                h.Units = 'inches';
+                pos = h.Position + [0.5 -0.5 0 0] .*(ii-1);
+                h.Position = pos;
+                h.Name = sprintf('Fe freq plot - Body %.0f', obj(ii).bodyNumber);
+
+                hs1 = subplot(2,1,1);
+                plot(xvals, abs(fe(1,:))./1e3, xvals, abs(fe(3,:))./1e3, xvals, abs(fe(5,:))./1e3)
+                grid on
+                ylabel('Force Mag (kN or kNm)')
+                xlabel(xlab);
+                xlim(xlimval);
+                title(sprintf('Excitation Force - Body %.0f', obj(ii).bodyNumber))
+                legend('Surge', 'Heave', 'Pitch', 'location', 'best')
+
+                hs2 = subplot(2,1,2);
+                plot(xvals, (180./pi).* angle(fe(1,:)), xvals, (180./pi).* angle(fe(3,:)), xvals, (180./pi).* angle(fe(5,:)))
+                grid on
+                ylim([-180 180])
+                ylabel('Phase (deg)')
+                xlabel(xlab);
+                xlim(xlimval);
+                set(gca, 'ytick',-180:90:180)
+                
+                linkaxes([hs1 hs2], 'x')
+            end
+        end
+        
+        function plot_radiation(obj, varargin)
+            
+            xunit = 'w';
+            if nargin > 1
+                if strcmp(varargin{1}, 'w') || strcmp(varargin{1}, 'T') || strcmp(varargin{1}, 'f')
+                    xunit = varargin{1};
+                else
+                    warning('Not a valid x unit. Plotting values against angular frequency')
+                end
+            end
+            for ii =1:numel(obj)
+                w = obj(ii).hydroData.simulation_parameters.w';
+                rad = 1000.*obj(ii).hydroData.hydro_coeffs.radiation_damping.all;
+
+                switch xunit
+                    case 'w'
+                        xvals = w;
+                        xlab = sprintf('Angular Frequency (rad/s)');
+                        xlimval = w([1 end]);
+                    case 'T'
+                        xvals = 2*pi./w;
+                        xlab = sprintf('Period (sec)');
+                        xlimval = [0 20];
+                    case 'f'
+                        xvals = w./(2*pi);
+                        xlab = sprintf('Frequency (Hz)');
+                        xlimval = xvals([1 end]);
+                end
+
+                h = figure;
+                h.Color = 'w';
+                h.Units = 'inches';
+                pos = h.Position + [0.5 -0.5 0 0] .*(ii-1);
+                h.Position = pos;
+                h.Name = sprintf('Rad freq plot - Body %.0f', obj(ii).bodyNumber);
+
+%                 hs1 = subplot(2,1,1);
+                bodNum = obj(ii).bodyNumber;
+                for jj = 1:2:6
+                    plot(xvals, w'.*squeeze(rad(jj,jj+6*(bodNum-1),:))./1e3);
+                    hold on
+                end
+                hold off
+                grid on
+                ylabel('Radiation Coeff (kN/(m/s) or kNm/(rad/s))')
+                xlabel(xlab);
+                xlim(xlimval);
+                title(sprintf('Radiation Coeff - Body %.0f', obj(ii).bodyNumber))
+                legend('Surge', 'Heave', 'Pitch', 'location', 'best')
+
+%                 hs2 = subplot(2,1,2);
+%                 plot(xvals, (180./pi).* angle(fe(1,:)), xvals, (180./pi).* angle(fe(2,:)), xvals, (180./pi).* angle(fe(3,:)))
+%                 grid on
+%                 ylim([-180 180])
+%                 ylabel('Phase (deg)')
+%                 xlabel(xlab);
+%                 xlim(xlimval);
+%                 set(gca, 'ytick',-180:90:180)
+%                 
+%                 linkaxes([hs1 hs2], 'x')
+            end
+        end
+        
         function varargout = plot_rad_ss_eigvals(obj)
             
+        end
+        
+        function calc_resonant_periods(obj)
+            fprintf('Resonant Period Information:\n')
+            mtot = 0;
+            jtot = 0;
+            ktot_33 = 0;
+            ktot_55 = 0;
+            for ii = 1:numel(obj)
+                m = 1000 * (obj(ii).hydroData.properties.disp_vol  + ...
+                    obj(ii).hydroData.hydro_coeffs.added_mass.inf_freq(3,3+(6*(obj(ii).bodyNumber-1))));
+                J = obj(ii).momOfInertia(2) + 1000 * obj(ii).hydroData.hydro_coeffs.added_mass.inf_freq(5,5+(6*(obj(ii).bodyNumber-1)));
+                k33 = 1000*9.81*obj(ii).hydroData.hydro_coeffs.linear_restoring_stiffness(3,3);
+                k55 = 1000*9.81*obj(ii).hydroData.hydro_coeffs.linear_restoring_stiffness(5,5);
+                mtot = mtot + m;
+                jtot = jtot + J;
+                ktot_33 = ktot_33 + k33;
+                ktot_55 = ktot_55 + k55;
+                Tp33 = 2*pi*sqrt(m/k33);
+                Tp55 = 2*pi*sqrt(J/k55);
+                fprintf('Body %.0f ----------------\n', ii);
+                fprintf('  Heave: %4.1f sec\n', Tp33);
+                fprintf('  Pitch: %4.1f sec\n', Tp55);
+            end
+            
+            jtot = 0;
+            cg = 0;
+            for ii = 1:numel(obj)
+                m = 1000 * (obj(ii).hydroData.properties.disp_vol);
+                cgzi = obj(ii).hydroData.properties.cg(3);
+                cg = cg + cgzi * m;
+            end
+            for ii = 1:numel(obj)
+                cgzi = obj(ii).hydroData.properties.cg(3);
+                J = obj(ii).momOfInertia(2) + 1000 * obj(ii).hydroData.hydro_coeffs.added_mass.inf_freq(5,5+(6*(obj(ii).bodyNumber-1)));
+                jtot = jtot + J + cgzi * m;
+            end
+            Tp33 = 2*pi*sqrt(mtot/ktot_33);
+            Tp55 = 2*pi*sqrt(jtot/ktot_55);
+            fprintf('Coupled Bodies --------\n');
+            fprintf('  Heave: %4.1f sec\n', Tp33);
+            fprintf('  Pitch: %4.1f sec\n', Tp55);
+        end
+        
+        function plot_single_body_raos(obj)
+            for ii = 1:numel(obj)
+                w = obj(ii).hydroData.simulation_parameters.w';
+                fe = 1000.*9.81.*squeeze(obj(ii).hydroData.hydro_coeffs.excitation.re([1 3 5],1,:) + 1j .* obj(ii).hydroData.hydro_coeffs.excitation.im([1 3 5],1,:));
+                b = nan(3,size(obj(ii).hydroData.hydro_coeffs.radiation_damping.all, 3));
+                a = nan(3,size(obj(ii).hydroData.hydro_coeffs.radiation_damping.all, 3));
+                kk = 1;
+                for jj = [1 3 5]
+                    b(kk,:) = 1000.*w.*shiftdim(obj(ii).hydroData.hydro_coeffs.radiation_damping.all(jj, jj + (6*(obj(ii).bodyNumber-1)), :),1);
+                    a(kk,:) = 1000.*shiftdim(obj(ii).hydroData.hydro_coeffs.added_mass.all(jj, jj + (6*(obj(ii).bodyNumber-1)), :),1);
+                    kk = kk + 1;
+                end
+                
+                c = 1000.*9.81.*[0 obj(ii).hydroData.hydro_coeffs.linear_restoring_stiffness(3,3) obj(ii).hydroData.hydro_coeffs.linear_restoring_stiffness(5,5)];
+                m = 1000.*[obj(ii).hydroData.properties.disp_vol obj(ii).hydroData.properties.disp_vol obj(ii).momOfInertia(2) ./ 1000];
+                rao_11 = fe(1,:) ./ (c(1) - (m(1) + a(1,:)).*w.^2 + 1j .* b(1,:).*w); 
+                rao_33 = fe(2,:) ./ (c(2) - (m(2) + a(2,:)).*w.^2 + 1j .* b(2,:).*w); 
+                rao_55 = fe(3,:) ./ (c(3) - (m(3) + a(3,:)).*w.^2 + 1j .* b(3,:).*w); 
+                
+                
+                h = figure;
+                h.Color = 'w';
+                h.Units = 'inches';
+                pos = h.Position + [0.5 -0.5 0 0] .*(ii-1);
+                h.Position = pos;
+                
+                subplot(2,1,1)
+                plot(2*pi./w, abs(rao_11), 2*pi./w, abs(rao_33), 2*pi./w, abs(rao_55))
+                grid on
+                xlim([0 20])
+                xlabel('Period (sec)')
+                ylabel('RAO mag (m/m), (rad/m) ')
+                legend('Surge', 'Heave', 'Pitch')
+                title(sprintf('Linear RAO''s, Body %.0f', ii))
+                
+                subplot(2,1,2)
+                plot(2*pi./w, 180.*angle(rao_11)./pi, 2*pi./w, 180.*angle(rao_33)./pi, 2*pi./w, 180.*angle(rao_55)./pi)
+                grid on
+                xlim([0 20])
+                ylim([-180 180])
+                set(gca, 'ytick',-180:90:180)
+                xlabel('Period (sec)')
+                ylabel('RAO phase (deg)')
+                legend('Surge', 'Heave', 'Pitch')
+                
+                
+            end
         end
 
     end
