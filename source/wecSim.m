@@ -168,6 +168,7 @@ end; clear ii
 toc
 simu.listInfo(waves.typeNum);
 waves.listInfo
+fprintf('\nCurrent Time: %s\n\n', datestr(now ,'HH:MM AM'))
 fprintf('\nList of Body: ');
 fprintf('Number of Bodies = %u \n',simu.numWecBodies)
 for i = 1:simu.numWecBodies
@@ -338,6 +339,9 @@ clear body*_hspressure_out body*_wavenonlinearpressure_out body*_wavelinearpress
 %% Save files
 clear ans table tout; 
 toc
+if strcmp(simu.explorer,'off')
+bdclose all
+end
 % diary off 
 % movefile('simulation.log',simu.logFile)
 % save(simu.caseFile)
