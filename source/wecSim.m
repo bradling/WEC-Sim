@@ -209,7 +209,12 @@ warning('off','MATLAB:loadlibrary:parsewarnings');
 warning('off','Simulink:blocks:DivideByZero');
 % run simulation
 simu.loadSimMechModel(simu.simMechanicsFile);
-sim(simu.simMechanicsFile);
+simOut=sim(simu.simMechanicsFile, 'SrcWorkspace', 'current');
+vars = simOut.who;
+for iVar = 1:length(vars)
+    eval([vars{iVar} ' = simOut.get(''' vars{iVar} ''');']);
+end; clear vars iVar simOut
+
 % Restore modified stuff
 clear nlHydro sv_linearHydro sv_nonlinearHydro ssCalc radiation_option sv_convolution sv_stateSpace sv_constantCoeff typeNum B2B sv_B2B sv_noB2B;
 clear nhbod* sv_b* sv_noWave sv_regularWaves sv_irregularWaves sv_udfWaves sv_meanFS sv_instFS moorDyn sv_mooringMatrix sv_moorDyn sv_MEOn sv_MEOff morrisonElement;
