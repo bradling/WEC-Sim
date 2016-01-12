@@ -2,7 +2,7 @@
 
 %% Start WEC-Sim log
 bdclose('all'); diary off; %close all; 
-clear body waves simu output pto constraint ptoSim
+clear body waves output pto constraint ptoSim
 % delete('*.log');
 % diary('simulation.log')
 
@@ -11,7 +11,12 @@ clear body waves simu output pto constraint ptoSim
 tic
 try fprintf('wecSimMRC Case %g\n',imcr); end
 fprintf('\nWEC-Sim Read Input File ...   \n'); 
-evalc('wecSimInputFile');
+if exist('simu', 'var')
+    evalc(simu.inputFile);
+else
+    evalc('wecSimInputFile');
+end
+% evalc('wecSimInputFile.m')
 % Read Inputs for Multiple Conditions Run 
 if exist('mcr','var') == 1; 
    for n=1:length(mcr.cases(1,:))
