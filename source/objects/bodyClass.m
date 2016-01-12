@@ -228,6 +228,7 @@ classdef bodyClass<handle
             end
             obj.bodyGeometry.numFace = length(obj.bodyGeometry.face);
             obj.bodyGeometry.numVertex = length(obj.bodyGeometry.vertex);
+            obj.checkStl();
             obj.triArea();
             obj.triCenter();
         end
@@ -236,30 +237,24 @@ classdef bodyClass<handle
             % Function to calculate the area of a triangle
             points = obj.bodyGeometry.vertex;
             faces = obj.bodyGeometry.face;
-            tnorm = obj.bodyGeometry.norm;
             v1 = points(faces(:,3),:)-points(faces(:,1),:);
             v2 = points(faces(:,2),:)-points(faces(:,1),:);
             av_tmp =  1/2.*(cross(v1,v2));
             area_mag = sqrt(av_tmp(:,1).^2 + av_tmp(:,2).^2 + av_tmp(:,3).^2);
             obj.bodyGeometry.area = area_mag;
-            % Check STL file
-            av = zeros(length(area_mag),3);
-            av(:,1) = area_mag.*tnorm(:,1);
-            av(:,2) = area_mag.*tnorm(:,2);
-            av(:,3) = area_mag.*tnorm(:,3);
-            if sum(sum(sign(av_tmp))) ~= sum(sum(sign(av)))
-                warning(['The order of triangle vertices in ' obj.geometryFile ' do not follow the right hand rule. ' ...
-                    'This will causes visualization errors in the SimMechanics Explorer'])
-%                 for ii = 1:size(faces,1)
-%                     if sum(av_tmp(ii,:) + av(ii,:)) < 0.00001;
-%                         obj.bodyGeometry.face(ii,:) = obj.bodyGeometry.face(ii,[3 2 1]);
-%                         if nargin > 1
-%                             fprintf('Flipping Normal %.0f, from [%.3f, %.3f, %.3f] to [%.3f, %.3f, %.3f]\n', ...
-%                                 ii, av_tmp(ii,1), av_tmp(ii,2), av_tmp(ii,3), av(ii,1), av(ii,2), av(ii,3));
-%                         end
-%                     end
-%                 end
-            end
+        end
+
+        function checkStl(obj)
+            % Function to check STL file
+            tnorm = obj.bodyGeometry.norm;
+            %av = zeros(length(area_mag),3);
+            %av(:,1) = area_mag.*tnorm(:,1);
+            %av(:,2) = area_mag.*tnorm(:,2);
+            %av(:,3) = area_mag.*tnorm(:,3);
+            %if sum(sum(sign(av_tmp))) ~= sum(sum(sign(av)))
+            %    warning(['The order of triangle vertices in ' obj.geometryFile ' do not follow the right hand rule. ' ...
+            %        'This will causes visualization errors in the SimMechanics Explorer'])
+            %end
             norm_mag = sqrt(tnorm(:,1).^2 + tnorm(:,2).^2 + tnorm(:,3).^2);
             check = sum(norm_mag)/length(norm_mag);
             if check>1.01 || check<0.99
