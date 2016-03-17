@@ -142,11 +142,19 @@ if strcmp(waves.type,'userDefined')~=1 && strcmp(waves.type,'noWave')~=1 && strc
         error('waves.w outside of range of available hydro data')
     end
 end
-% Check CITime
-if waves.typeNum~=0 && waves.typeNum~=10
+% Check Radiation CITime
+if waves.typeNum~=0 && waves.typeNum~=10 && simu.ssCalc == 0
     for iBod = 1:simu.numWecBodies
-        if simu.CITime > max(body(iBod).hydroData.hydro_coeffs.radiation_damping.impulse_response_fun.t)
-          error('simu.CITime is larger than the length of the IRF');
+        if simu.CITime > body(iBod).hydroData.hydro_coeffs.radiation_damping.impulse_response_fun.t(end)
+          error('simu.CITime is larger than the length of the Radiation IRF');
+        end
+    end
+end
+% Check Excitation CITime
+if waves.typeNum == 30
+    for iBod = 1:simu.numWecBodies
+        if simu.CITime > body(iBod).hydroData.hydro_coeffs.excitation.impulse_response_fun.t(end)
+          error('simu.CITime is larger than the length of the Excitation IRF');
         end
     end
 end
