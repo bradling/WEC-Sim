@@ -42,6 +42,7 @@ classdef simulationClass<handle
         mcrCaseFile         = []                                           % mat file that contain a list of the multiple conditions runs with given conditions  
         morrisonElement     = 0                                            % Option for Morrison Element calculation: Off->'0', On->'1', (default = 0)
         outputtxt           = 0                                            % Option to save results as ASCII files.
+        outputPress         = 1
     end
 
     properties (SetAccess = 'public', GetAccess = 'public')%internal
