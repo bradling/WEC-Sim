@@ -46,6 +46,7 @@ classdef simulationClass<handle
         morrisonElement     = 0                                            % Option for Morrison Element calculation: Off->'0', On->'1', (default = 0)
         outputtxt           = 0                                            % Option to save results as ASCII files.
         reloadH5Data        = 0                                            % Option to re-load hydro data from hf5 file between runs: Off->'0', On->'1', (default = 0)     
+        outputPress         = 1
     end
 
     properties (SetAccess = 'public', GetAccess = 'public')%internal
