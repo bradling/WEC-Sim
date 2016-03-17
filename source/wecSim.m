@@ -16,8 +16,8 @@
 %%
 
 %% Start WEC-Sim log
-bdclose('all');  close all; 
-% clc; diary off;
+bdclose('all'); 
+% clc; diary off; close all;
 clear body waves simu output pto constraint ptoSim mooring
 % delete('*.log');
 % diary('simulation.log')
