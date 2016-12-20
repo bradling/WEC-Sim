@@ -56,7 +56,6 @@ end
 
 %=====================================================
 
-fid=fopen(filename, 'r'); %Open the file, assumes STL ASCII format.
 
 if eol == 1
     fmt = '%*s %*s %f32 %f32 %f32 \n %*s %*s \n %*s %f32 %f32 %f32 \n %*s %f32 %f32 %f32 \n %*s %f32 %f32 %f32 \n %*s \n %*s \n';

@@ -244,6 +244,14 @@ warning('off','Simulink:blocks:DivideByZero');
 % run simulation
 simu.loadSimMechModel(simu.simMechanicsFile);
 sim(simu.simMechanicsFile);
+% >>> UNCOMMENT THIS BLOCK FOR RUNNING WECSIM INSIDE OF A FUNCTINO <<<
+% simOut=sim(simu.simMechanicsFile, 'SrcWorkspace', 'current');
+% vars = simOut.who;
+% for iVar = 1:length(vars)
+%     eval([vars{iVar} ' = simOut.get(''' vars{iVar} ''');']);
+% end; clear vars iVar simOut
+% >>>   <<<
+
 % Restore modified stuff
 clear nlHydro sv_linearHydro sv_nonlinearHydro ssCalc radiation_option sv_convolution sv_stateSpace sv_constantCoeff typeNum B2B sv_B2B sv_noB2B;
 clear nhbod* sv_b* sv_noWave sv_regularWaves sv_irregularWaves sv_udfWaves sv_instFS sv_meanFS sv_MEOn sv_MEOff morrisonElement;
@@ -305,12 +313,18 @@ wpressurenl = {};
 wpressurel = {};
 for ii = 1:length(body(1,:))
     if simu.nlHydro~=0 && body(ii).nhBody==0 && simu.outputPress == true
-        % hydrostatic pressure
-        eval(['hspressure{' num2str(ii) '} = body' num2str(ii) '_hspressure_out;']);
-        % wave (Froude-Krylov) nonlinear pressure
-        eval(['wpressurenl{' num2str(ii) '} = body' num2str(ii) '_wavenonlinearpressure_out;']);
-        % wave (Froude-Krylov) linear pressure
-        eval(['wpressurel{' num2str(ii) '} = body' num2str(ii) '_wavelinearpressure_out;']);
+        try
+            % hydrostatic pressure
+            eval(['hspressure{' num2str(ii) '} = body' num2str(ii) '_hspressure_out;']);
+            % wave (Froude-Krylov) nonlinear pressure
+            eval(['wpressurenl{' num2str(ii) '} = body' num2str(ii) '_wavenonlinearpressure_out;']);
+            % wave (Froude-Krylov) linear pressure
+            eval(['wpressurel{' num2str(ii) '} = body' num2str(ii) '_wavelinearpressure_out;']);
+        catch
+            hspressure{ii} = [];
+            wpressurenl{ii} = [];
+            wpressurel{ii} = [];    
+        end
     else
         hspressure{ii} = [];
         wpressurenl{ii} = [];

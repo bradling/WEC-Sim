@@ -113,6 +113,7 @@ classdef responseClass<handle
                 for icol=1:ncol
                     eval(['obj.moorDyn.Line' num2str(iline) '.' header{icol} ' = data(:,' num2str(icol) ');']);
                 end
+                fclose(fid);
             end
         end
 
