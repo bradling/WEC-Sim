@@ -35,8 +35,8 @@ classdef waveClass<handle
     
     properties (SetAccess = 'private', GetAccess = 'public')%internal
         typeNum                     = []                                   % Number to represent different type of waves
-        bemFreq                     = []                                   % Number of wave frequencies from WAMIT
-        waterDepth                  = []                                   % [m] Water depth (from WAMIT)
+        bemFreq                     = []                                   % Number of wave frequencies from BEM
+        waterDepth                  = []                                   % [m] Water depth (from BEM)
         deepWaterWave               = []                                   % Deep water or not, depending on input from WAMIT, NEMOH and AQWA
         waveAmpTime                 = []                                   % [m] Wave elevation time history
         A                           = []                                   % [m] Wave amplitude for regular waves or 2*(wave spectrum vector) for irregular waves
