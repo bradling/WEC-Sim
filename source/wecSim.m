@@ -75,14 +75,6 @@ for ii = 1:length(body(1,:))
         body(ii).massCalcMethod = 'user';
     end
 end
-% Determine if hydro data needs to be reloaded from h5 file, or if hydroData
-% was stored in memory from a previous run.
-readH5File = true;
-if exist('mcr','var') == 1
-    if reloadHydroDataFlag == false && imcr > 1
-        readH5File = false;
-    end
-end
 simu.numWecBodies = numHydroBodies; clear numHydroBodies
 for ii = 1:simu.numWecBodies
     body(ii).checkinputs;
