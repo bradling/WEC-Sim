@@ -69,6 +69,7 @@ waitbar(2/6);
 
 %% Radiation IRFs
 clear X Y Legends
+try
 Fig3 = figure('Position',[50,100,975,521]);
 Title = ['Normalized Radiation Impulse Response Functions: ',...
     '$$\bar{K}_{i,j}(t) = {\frac{2}{\pi}}\int_0^{\infty}{\frac{B_{i,j}(\omega)}{\rho}}\cos({\omega}t)d\omega$$'];
@@ -106,6 +107,9 @@ Notes = {'Notes:',...
     'here. If another DOF is significant to the system, that IRF should also ',...
     'be plotted and verified before proceeding.']};
 FormatPlot(Fig3,Title,Subtitles,XLables,YLables,X,Y,Legends,Notes)
+catch
+    warning('Radiation IRF Plot failed')
+end
 waitbar(3/6);
 
 %% Excitation Force Magnitude
@@ -162,6 +166,7 @@ FormatPlot(Fig5,Title,Subtitles,XLables,YLables,X,Y,Legends,Notes)
 waitbar(5/6);
 
 %% Excitation IRFs
+try
 B=1;  % Wave heading index
 clear X Y Legends
 Fig6 = figure('Position',[950,100,975,521]);
@@ -192,6 +197,9 @@ Notes = {'Notes:',...
     'pitch DOFs are plotted here. If another wave heading or DOF is significant ',...
     'to the system, that IRF should also be plotted and verified before proceeding.']};
 FormatPlot(Fig6,Title,Subtitles,XLables,YLables,X,Y,Legends,Notes)
+catch
+    warning('Excitation IRF Plot Failed');
+end
 waitbar(6/6);
 
 close(p);

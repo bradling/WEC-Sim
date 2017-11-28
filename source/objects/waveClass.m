@@ -333,6 +333,13 @@ classdef waveClass<handle
             % Used by waveSetup
             obj.waveAmpTime = zeros(maxIt+1,2);
             maxRampIT=round(rampT/dt);
+                obj.waveAmpTime(:,1) = (0:dt:(maxIt*dt))';
+                obj.waveAmpTime(:,2) = obj.A .* cos(obj.w .* obj.waveAmpTime(:,1));
+%             if rampT ~= 0
+%                 rampFunc = (1+cos(pi+pi*(1:maxRampIT-1)/maxRampIT))/2;
+%                 obj.waveAmpTime(1:maxRampIT,2) = obj.waveAmpTime(1:maxRampIT,2) .* rampFunc';
+%             end
+                
             if rampT==0
                 for i=1:maxIt+1
                     t = (i-1)*dt;
@@ -402,27 +409,28 @@ classdef waveClass<handle
             % Used by waveSetup
             obj.waveAmpTime = zeros(maxIt+1,2);
             maxRampIT=round(rampT/dt);
+            obj.waveAmpTime(:,1) = (0:dt:maxIt*dt)';
             if rampT==0
                 for i=1:maxIt+1;
-                    t = (i-1)*dt;
+%                     t = (i-1)*dt;
                     tmp=sqrt(obj.A.*df);
-                    tmp1 = tmp.*real(exp(sqrt(-1).*(obj.w.*t + obj.phaseRand)));
-                    obj.waveAmpTime(i,1) = t;
+                    tmp1 = tmp.*real(exp(sqrt(-1).*(obj.w.*obj.waveAmpTime(i,1) + obj.phaseRand)));
+%                     obj.waveAmpTime(i,1) = t;
                     obj.waveAmpTime(i,2) = sum(tmp1);
                 end
             else
                 for i=1:maxRampIT
-                    t = (i-1)*dt;
+%                     t = (i-1)*dt;
                     tmp=sqrt(obj.A.*df);
-                    tmp1 = tmp.*real(exp(sqrt(-1).*(obj.w.*t + obj.phaseRand)));
-                    obj.waveAmpTime(i,1) = t;
+                    tmp1 = tmp.*real(exp(sqrt(-1).*(obj.w.*obj.waveAmpTime(i,1) + obj.phaseRand)));
+%                     obj.waveAmpTime(i,1) = t;
                     obj.waveAmpTime(i,2) = sum(tmp1)*(1+cos(pi+pi*(i-1)/maxRampIT))/2;
                 end
                 for i=maxRampIT+1:maxIt+1
-                    t = (i-1)*dt;
+%                     t = (i-1)*dt;
                     tmp=sqrt(obj.A.*df);
-                    tmp1 = tmp.*real(exp(sqrt(-1).*(obj.w.*t + obj.phaseRand)));
-                    obj.waveAmpTime(i,1) = t;
+                    tmp1 = tmp.*real(exp(sqrt(-1).*(obj.w.*obj.waveAmpTime(i,1) + obj.phaseRand)));
+%                     obj.waveAmpTime(i,1) = t;
                     obj.waveAmpTime(i,2) = sum(tmp1);
                 end
             end
@@ -455,6 +463,7 @@ classdef waveClass<handle
                 fprintf('\tSpectrum Type                        = Pierson-Moskowitz  \n')
             elseif strcmp(obj.spectrumType,'Imported')
                 fprintf('\tSpectrum Type                        = User-Defined \n')
+                fprintf('\tSpectrum Data File                   = %s \n', obj.spectrumDataFile)
             end
         end
     end

@@ -76,7 +76,11 @@ end
 % Run WEC-Sim
 warning('off','MATLAB:DELETE:FileNotFound'); delete('mcrCase*.mat')
 for imcr=1:length(mcr.cases(:,1))
-    wecSim;
+%     if imcr == 1
+        wecSim;
+%     else
+%         [~] = evalc('wecSim');
+%     end
     if exist('userDefinedFunctionsMCR.m','file') == 2; userDefinedFunctionsMCR; end
 %%    %Store hydrodata in memory for reuse in future runs.
     if simu.reloadH5Data == 0 && imcr == 1        

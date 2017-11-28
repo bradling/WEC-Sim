@@ -99,6 +99,8 @@ classdef bodyClass<handle
             obj.hydroData.hydro_coeffs.excitation.im = h5load(filename, [name '/hydro_coeffs/excitation/im']);
             try obj.hydroData.hydro_coeffs.excitation.impulse_response_fun.f = h5load(filename, [name '/hydro_coeffs/excitation/impulse_response_fun/f']); end
             try obj.hydroData.hydro_coeffs.excitation.impulse_response_fun.t = h5load(filename, [name '/hydro_coeffs/excitation/impulse_response_fun/t']); end
+            try obj.hydroData.hydro_coeffs.diffraction.re = h5load(filename, [name '/hydro_coeffs/excitation/scattering/re']); end
+            try obj.hydroData.hydro_coeffs.diffraction.im = h5load(filename, [name '/hydro_coeffs/excitation/scattering/im']); end
             obj.hydroData.hydro_coeffs.added_mass.all = h5load(filename, [name '/hydro_coeffs/added_mass/all']);
             obj.hydroData.hydro_coeffs.added_mass.inf_freq = h5load(filename, [name '/hydro_coeffs/added_mass/inf_freq']);
             obj.hydroData.hydro_coeffs.radiation_damping.all = h5load(filename, [name '/hydro_coeffs/radiation_damping/all']);
@@ -350,6 +352,22 @@ classdef bodyClass<handle
                     obj.hydroForce.fExt.im(ii) = interp1(obj.hydroData.simulation_parameters.w,squeeze(im(ii,1,:)),w,'spline');
                 end
             end
+            if isfield(obj.hydroData.hydro_coeffs, 'diffraction')
+                re = obj.hydroData.hydro_coeffs.diffraction.re(:,:,:) .*rho.*g;
+                im = obj.hydroData.hydro_coeffs.diffraction.im(:,:,:) .*rho.*g;
+                obj.hydroForce.fDif.re=zeros(1,6);
+                obj.hydroForce.fDif.im=zeros(1,6);
+                for ii=1:6
+                    if length(obj.hydroData.simulation_parameters.wave_dir) > 1
+                        [X,Y] = meshgrid(obj.hydroData.simulation_parameters.w, obj.hydroData.simulation_parameters.wave_dir);
+                        obj.hydroForce.fDif.re(ii) = interp2(X, Y, squeeze(re(ii,:,:)), w, waveDir);
+                        obj.hydroForce.fDif.im(ii) = interp2(X, Y, squeeze(im(ii,:,:)), w, waveDir);
+                    elseif obj.hydroData.simulation_parameters.wave_dir == waveDir
+                        obj.hydroForce.fDif.re(ii) = interp1(obj.hydroData.simulation_parameters.w,squeeze(re(ii,1,:)),w,'spline');
+                        obj.hydroForce.fDif.im(ii) = interp1(obj.hydroData.simulation_parameters.w,squeeze(im(ii,1,:)),w,'spline');
+                    end
+                end
+            end
         end
 
         function irrExcitation(obj,wv,numFreq,waveDir,rho,g)
@@ -368,6 +386,22 @@ classdef bodyClass<handle
                     obj.hydroForce.fExt.re(:,ii) = interp1(obj.hydroData.simulation_parameters.w,squeeze(re(ii,1,:)),wv,'spline');
                     obj.hydroForce.fExt.im(:,ii) = interp1(obj.hydroData.simulation_parameters.w,squeeze(im(ii,1,:)),wv,'spline');
                 end
+            end
+            if isfield(obj.hydroData.hydro_coeffs, 'diffraction')
+                re = obj.hydroData.hydro_coeffs.diffraction.re(:,:,:) .*rho.*g;
+                im = obj.hydroData.hydro_coeffs.diffraction.im(:,:,:) .*rho.*g;
+                obj.hydroForce.fDif.re=zeros(numFreq,6);
+                obj.hydroForce.fDif.im=zeros(numFreq,6);
+                for ii=1:6
+                    if length(obj.hydroData.simulation_parameters.wave_dir) > 1
+                        [X,Y] = meshgrid(obj.hydroData.simulation_parameters.w, obj.hydroData.simulation_parameters.wave_dir);
+                        obj.hydroForce.fDif.re(:,ii) = interp2(X, Y, squeeze(re(ii,:,:)), wv, waveDir);
+                        obj.hydroForce.fDif.im(:,ii) = interp2(X, Y, squeeze(im(ii,:,:)), wv, waveDir);
+                    elseif obj.hydroData.simulation_parameters.wave_dir == waveDir
+                        obj.hydroForce.fDif.re(:,ii) = interp1(obj.hydroData.simulation_parameters.w,squeeze(re(ii,1,:)),wv,'spline');
+                        obj.hydroForce.fDif.im(:,ii) = interp1(obj.hydroData.simulation_parameters.w,squeeze(im(ii,1,:)),wv,'spline');
+                    end
+                end    
             end
         end
 
@@ -579,7 +613,7 @@ classdef bodyClass<handle
             verts_out(:,3) = verts(:,3) + x(3);
         end
 
-        function write_paraview_vtp(obj, t, pos_all, bodyname, model, simdate, hspressure,wavenonlinearpressure,wavelinearpressure)
+        function write_paraview_vtp(obj, t, pos_all, bodyname, model, simdate, hspressure,wavenonlinearpressure)
             % Writes vtp files for visualization with ParaView
             numVertex = obj.bodyGeometry.numVertex;
             numFace = obj.bodyGeometry.numFace;
@@ -659,14 +693,14 @@ classdef bodyClass<handle
                     fprintf(fid,'        </DataArray>\n');
                 end
                 % Linear Froude-Krylov Wave Pressure
-                if ~isempty(wavelinearpressure)
-                    fprintf(fid,'        <DataArray type="Float32" Name="Wave Pressure Linear" NumberOfComponents="1" format="ascii">\n');
-                    for ii = 1:numFace
-                        fprintf(fid, '          %i', wavelinearpressure.signals.values(it,ii));
-                    end; 
-                    fprintf(fid, '\n');
-                    fprintf(fid,'        </DataArray>\n');
-                end
+%                 if ~isempty(wavelinearpressure)
+%                     fprintf(fid,'        <DataArray type="Float32" Name="Wave Pressure Linear" NumberOfComponents="1" format="ascii">\n');
+%                     for ii = 1:numFace
+%                         fprintf(fid, '          %i', wavelinearpressure.signals.values(it,ii));
+%                     end; 
+%                     fprintf(fid, '\n');
+%                     fprintf(fid,'        </DataArray>\n');
+%                 end
                 fprintf(fid,'      </CellData>\n');
                 % end file
                 fprintf(fid, '    </Piece>\n');

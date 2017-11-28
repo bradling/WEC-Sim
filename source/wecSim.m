@@ -16,7 +16,7 @@
 %%
 
 %% Start WEC-Sim log
-bdclose('all'); close all; 
+% bdclose('all');
 clear body waves simu output pto constraint ptoSim mooring
 % delete('*.log');
 % diary('simulation.log')
@@ -24,7 +24,7 @@ clear body waves simu output pto constraint ptoSim mooring
 
 %% Read input file
 tic
-try fprintf('wecSimMCR Case %g\n',imcr); end
+try fprintf('wecSimMCR Case %g of %g\n',imcr, size(mcr.cases,1)); end
 fprintf('\nWEC-Sim Read Input File ...   \n'); 
 evalc('wecSimInputFile');
 % Read Inputs for Multiple Conditions Run 
@@ -243,13 +243,13 @@ warning('off','MATLAB:loadlibrary:parsewarnings');
 warning('off','Simulink:blocks:DivideByZero');
 % run simulation
 simu.loadSimMechModel(simu.simMechanicsFile);
-sim(simu.simMechanicsFile);
+% sim(simu.simMechanicsFile);
 % >>> UNCOMMENT THIS BLOCK FOR RUNNING WECSIM INSIDE OF A FUNCTINO <<<
-% simOut=sim(simu.simMechanicsFile, 'SrcWorkspace', 'current');
-% vars = simOut.who;
-% for iVar = 1:length(vars)
-%     eval([vars{iVar} ' = simOut.get(''' vars{iVar} ''');']);
-% end; clear vars iVar simOut
+simOut=sim(simu.simMechanicsFile, 'SrcWorkspace', 'current');
+vars = simOut.who;
+for iVar = 1:length(vars)
+    eval([vars{iVar} ' = simOut.get(''' vars{iVar} ''');']);
+end; clear vars iVar simOut
 % >>>   <<<
 
 % Restore modified stuff
@@ -310,7 +310,7 @@ end
 % Cell-by-cell values
 hspressure = {};
 wpressurenl = {};
-wpressurel = {};
+% wpressurel = {};
 for ii = 1:length(body(1,:))
     if simu.nlHydro~=0 && body(ii).nhBody==0 && simu.outputPress == true
         try
@@ -319,20 +319,20 @@ for ii = 1:length(body(1,:))
             % wave (Froude-Krylov) nonlinear pressure
             eval(['wpressurenl{' num2str(ii) '} = body' num2str(ii) '_wavenonlinearpressure_out;']);
             % wave (Froude-Krylov) linear pressure
-            eval(['wpressurel{' num2str(ii) '} = body' num2str(ii) '_wavelinearpressure_out;']);
+%             eval(['wpressurel{' num2str(ii) '} = body' num2str(ii) '_wavelinearpressure_out;']);
         catch
             hspressure{ii} = [];
             wpressurenl{ii} = [];
-            wpressurel{ii} = [];    
+%             wpressurel{ii} = [];    
         end
     else
         hspressure{ii} = [];
         wpressurenl{ii} = [];
-        wpressurel{ii} = [];
+%         wpressurel{ii} = [];
     end
 end; clear ii
 % All
-output = responseClass(bodiesOutput,ptosOutput,constraintsOutput,ptosimOutput,mooringOutput,waves.type,waves.waveAmpTime,hspressure, wpressurenl, wpressurel);
+output = responseClass(bodiesOutput,ptosOutput,constraintsOutput,ptosimOutput,mooringOutput,waves.type,waves.waveAmpTime,hspressure, wpressurenl);
 clear bodiesOutput ptosOutput constraintsOutput ptosimOutput mooringOutput
 % MoorDyn
 for iMoor = 1:simu.numMoorings
@@ -355,7 +355,7 @@ end
 if simu.outputtxt==1
     output.writetxt();
 end
-% ParaView Visualization
+%% ParaView Visualization
 if simu.paraview == 1
     fprintf('    ...writing ParaView files...   \n')
     if exist('vtk','dir') ~= 0
@@ -381,7 +381,7 @@ if simu.paraview == 1
     for ii = 1:length(body(1,:))
         bodyname = output.bodies(ii).name;
         mkdir(['vtk' filesep 'body' num2str(ii) '_' bodyname]);
-        body(ii).write_paraview_vtp(output.bodies(ii).time, output.bodies(ii).position, bodyname, simu.simMechanicsFile, datestr(simu.simulationDate), hspressure{ii}, wpressurenl{ii}, wpressurel{ii});
+        body(ii).write_paraview_vtp(output.bodies(ii).time, output.bodies(ii).position, bodyname, simu.simMechanicsFile, datestr(simu.simulationDate), hspressure{ii}, wpressurenl{ii});
         bodies{ii} = bodyname;
         fprintf(fid,[bodyname '\n']);
         fprintf(fid,[num2str(body(ii).viz.color) '\n']);
@@ -409,5 +409,5 @@ clear ans table tout;
 toc
 % diary off 
 try movefile('simulation.log',simu.logFile); end
-try save(simu.caseFile); end
+% try save(simu.caseFile); end
 

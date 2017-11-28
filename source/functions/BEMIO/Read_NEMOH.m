@@ -80,7 +80,7 @@ waitbar(1/7);
 for m = 1:hydro(F).Nb
     hydro(F).dof(m) = 6;  % Default degrees of freedom for each body is 6
     if hydro(F).Nb == 1
-        fileID = fopen([filedir 'Mesh\Hydrostatics.dat']);
+        fileID = fopen([filedir 'Mesh\Hydrostatics_0.dat']);
     else
         fileID = fopen([filedir 'Mesh\Hydrostatics_' num2str(m-1) '.dat']);
     end
@@ -100,7 +100,7 @@ waitbar(2/7);
 %% KH file(s)
 for m = 1:hydro(F).Nb
     if hydro(F).Nb == 1
-        fileID = fopen([filedir 'Mesh\KH.dat']);
+        fileID = fopen([filedir 'Mesh\KH_0.dat']);
     else
         fileID = fopen([filedir 'Mesh\KH_' num2str(m-1) '.dat']);
     end
@@ -155,7 +155,7 @@ hydro(F).ex_im = hydro(F).ex_ma.*sin(hydro(F).ex_ph);  % Imaginary part of excit
 waitbar(5/7);
 
 %% Diffraction Force file (scattering)
-if exist('Results\DiffractionForce.tec','file')==2
+if exist([filedir 'Results\DiffractionForce.tec'],'file')==2
     fileID = fopen([filedir 'Results\DiffractionForce.tec']);
     raw = textscan(fileID,'%[^\n\r]');
     raw = raw{:};
@@ -178,7 +178,7 @@ end
 waitbar(6/7);
 
 %% Froude-Krylov force file
-if exist('Results\FKForce.tec','file')==2
+if exist([filedir 'Results\FKForce.tec'],'file')==2
     fileID = fopen([filedir 'Results\FKForce.tec']);
     raw = textscan(fileID,'%[^\n\r]');
     raw = raw{:};

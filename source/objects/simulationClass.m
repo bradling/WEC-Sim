@@ -129,13 +129,13 @@ classdef simulationClass<handle
                 error('The simMecahnics file, %s, does not exist in the case directory',value)
             end
             % Remove existing output folder
-            if exist(obj.outputDir,'dir') ~= 0
-                try
-                    rmdir(obj.outputDir,'s')
-                catch
-                    error('The output directory could not be removed. Please close any files in the output directory and try running WEC-Sim again')
-                end
-             end
+%             if exist(obj.outputDir,'dir') ~= 0
+%                 try
+%                     rmdir(obj.outputDir,'s')
+%                 catch
+%                     error('The output directory could not be removed. Please close any files in the output directory and try running WEC-Sim again')
+%                 end
+%              end
         end
 
         function rhoDensitySetup(obj,rho,g)

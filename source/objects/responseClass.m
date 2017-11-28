@@ -26,7 +26,7 @@ classdef responseClass<handle
     end
     
     methods (Access = 'public')
-        function obj = responseClass(bodiesOutput,ptosOutput,constraintsOutput,ptosimOutput,mooringOutput,wave_type,wave_elev,hspressure,wpressurenl,wpressurel)                      
+        function obj = responseClass(bodiesOutput,ptosOutput,constraintsOutput,ptosimOutput,mooringOutput,wave_type,wave_elev,hspressure,wpressurenl)                      
             % Initilization function
             % Read and format ouputs.
             % Wave
@@ -45,7 +45,6 @@ classdef responseClass<handle
                     obj.bodies(ii).cellPressures_time = hspressure{ii}.time;
                     obj.bodies(ii).cellPressures_hydrostatic = hspressure{ii}.signals.values;
                     obj.bodies(ii).cellPressures_waveLinear = wpressurenl{ii}.signals.values;
-                    obj.bodies(ii).cellPressures_waveNonLinear = wpressurel{ii}.signals.values;
                 end
             end
             % PTOs
@@ -101,6 +100,7 @@ classdef responseClass<handle
             for icol=1:ncol
                eval(['obj.moorDyn.Lines.' header{icol} ' = data(:,' num2str(icol) ');']);
             end
+            fclose(fid);
             % load Line#.out
             for iline=1:numLines
                 eval(['obj.moorDyn.Line' num2str(iline) '=struct();']);
